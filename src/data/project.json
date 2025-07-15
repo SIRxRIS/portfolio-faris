@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "Title": "Kalkulator Matematika - Bangun Datar & Ruang",
+    "Description": "Aplikasi web kalkulator matematika yang membantu menghitung luas dan keliling berbagai bangun datar serta volume bangun ruang. Dilengkapi dengan antarmuka yang user-friendly dan hasil perhitungan yang akurat untuk mendukung pembelajaran matematika.",
+    "Img": "/project/web-kalkulator.png",
+    "Link": "https://kalkulator-matematika-klp4-l477-f3p57m6op.vercel.app/",
+    "Github": "https://github.com/SIRxRIS/Kalkulator-Matematika-klp4",
+    "TechStack": ["Next.js", "Node.js", "Tailwind CSS"],
+    "Features": [
+      "Kalkulator luas bangun datar (persegi, persegi panjang, segitiga, lingkaran, dll)",
+      "Kalkulator keliling bangun datar dengan rumus yang tepat",
+      "Kalkulator volume bangun ruang (kubus, balok, tabung, kerucut, bola)",
+      "Hasil perhitungan real-time saat input dimasukkan",
+      "Panduan rumus matematika untuk setiap bangun"
+    ]
+  }
+]
