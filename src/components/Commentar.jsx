@@ -7,6 +7,8 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import { db } from "../firebase-comment";
 import {
@@ -15,21 +17,46 @@ import {
   Loader2,
   AlertCircle,
   Send,
+  Pin,
 } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
 const Comment = memo(({ comment, formatDate, index }) => (
-  <div className="px-4 pt-4 pb-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group hover:shadow-lg hover:-translate-y-0.5">
-    <div className="flex items-start gap-3 ">
-      <div className="p-2 rounded-full bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500/30 transition-colors">
+  <div
+    className={`px-4 pt-4 pb-2 rounded-xl border transition-all group hover:shadow-lg hover:-translate-y-0.5 ${
+      comment.isPinned
+        ? "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border-indigo-400/50"
+        : "bg-white/5 border-white/10 hover:bg-white/10"
+    }`}
+  >
+    {comment.isPinned && (
+      <div className="flex items-center gap-2 mb-2 px-2 py-1 rounded-full bg-indigo-500/30 text-indigo-300 text-xs font-medium w-fit">
+        <Pin className="w-3 h-3" />
+        <span>PINNED COMMENT</span>
+      </div>
+    )}
+
+    <div className="flex items-start gap-3">
+      <div
+        className={`p-2 rounded-full text-indigo-400 group-hover:bg-indigo-500/30 transition-colors ${
+          comment.isPinned ? "bg-indigo-500/40" : "bg-indigo-500/20"
+        }`}
+      >
         <UserCircle2 className="w-5 h-5" />
       </div>
       <div className="flex-grow min-w-0">
         <div className="flex items-center justify-between gap-4 mb-2">
-          <h4 className="font-medium text-white truncate">
-            {comment.userName}
-          </h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-white truncate">
+              {comment.userName}
+            </h4>
+            {comment.isAdmin && (
+              <span className="px-2 py-0.5 text-xs bg-red-500/20 text-red-400 rounded-full border border-red-500/30">
+                Admin
+              </span>
+            )}
+          </div>
           <span className="text-xs text-gray-400 whitespace-nowrap">
             {formatDate(comment.createdAt)}
           </span>
@@ -145,7 +172,15 @@ const Komentar = () => {
         id: doc.id,
         ...doc.data(),
       }));
-      setComments(commentsData);
+
+      // Sort comments: pinned first, then by creation date
+      const sortedComments = commentsData.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.createdAt?.toDate() - a.createdAt?.toDate();
+      });
+
+      setComments(sortedComments);
     });
   }, []);
 
@@ -157,6 +192,8 @@ const Komentar = () => {
       await addDoc(collection(db, "portfolio-comments"), {
         content: newComment,
         userName,
+        isAdmin: false,
+        isPinned: false,
         createdAt: serverTimestamp(),
       });
     } catch (error) {
@@ -164,6 +201,18 @@ const Komentar = () => {
       console.error("Error adding comment: ", error);
     } finally {
       setIsSubmitting(false);
+    }
+  }, []);
+
+  const handleTogglePin = useCallback(async (commentId, isPinned) => {
+    try {
+      const commentRef = doc(db, "portfolio-comments", commentId);
+      await updateDoc(commentRef, {
+        isPinned: isPinned,
+      });
+    } catch (error) {
+      console.error("Error updating pin status: ", error);
+      setError("Failed to update pin status. Please try again.");
     }
   }, []);
 
@@ -187,6 +236,9 @@ const Komentar = () => {
     }).format(date);
   }, []);
 
+  const pinnedComments = comments.filter((comment) => comment.isPinned);
+  const regularComments = comments.filter((comment) => !comment.isPinned);
+
   return (
     <div
       className="w-full bg-gradient-to-b from-white/10 to-white/5 rounded-2xl overflow-hidden backdrop-blur-xl shadow-xl"
@@ -205,6 +257,11 @@ const Komentar = () => {
           <h3 className="text-xl font-semibold text-white">
             Comments{" "}
             <span className="text-indigo-400">({comments.length})</span>
+            {pinnedComments.length > 0 && (
+              <span className="text-xs text-indigo-300 ml-2">
+                • {pinnedComments.length} pinned
+              </span>
+            )}
           </h3>
         </div>
       </div>
